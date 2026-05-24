@@ -11,11 +11,20 @@ function getHeaders() {
 }
 
 /**
- * Get current user info from Calendly.
+ * Extract user UUID from the Calendly JWT without calling /users/me
+ * (token lacks users:read scope).
  */
-async function getMe() {
-  const res = await axios.get(`${CALENDLY_BASE}/users/me`, { headers: getHeaders() });
-  return res.data.resource;
+function getUserUriFromToken() {
+  try {
+    const token = process.env.CALENDLY_API_TOKEN || '';
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
+    const uuid = decoded.user_uuid;
+    return uuid ? `https://api.calendly.com/users/${uuid}` : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -24,8 +33,11 @@ async function getMe() {
  */
 async function getEventType() {
   try {
-    const me = await getMe();
-    const userUri = me.uri;
+    const userUri = getUserUriFromToken();
+    if (!userUri) {
+      logger.error('Could not extract user URI from Calendly token');
+      return null;
+    }
 
     const res = await axios.get(`${CALENDLY_BASE}/event_types`, {
       headers: getHeaders(),
@@ -55,9 +67,10 @@ async function getEventType() {
  * @param {number} daysAhead - How many days to look ahead
  * @returns {Promise<Array>} Available slots
  */
-async function getAvailableSlots(eventTypeUri, daysAhead = 7) {
+async function getAvailableSlots(eventTypeUri, daysAhead = 14) {
   try {
-    const now = new Date();
+    // Start 1 hour from now to satisfy Calendly's "must be in the future" requirement
+    const now = new Date(Date.now() + 60 * 60 * 1000);
     const end = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
 
     const res = await axios.get(`${CALENDLY_BASE}/event_type_available_times`, {
@@ -200,7 +213,7 @@ function formatSlotEn(date) {
 }
 
 module.exports = {
-  getMe,
+  getUserUriFromToken,
   getEventType,
   getAvailableSlots,
   createSchedulingLink,

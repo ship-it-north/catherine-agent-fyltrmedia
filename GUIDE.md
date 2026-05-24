@@ -213,4 +213,53 @@ curl -X POST https://your-app.up.railway.app/api/calls/initiate \
 
 ---
 
+---
+
+## 9. Railway Deployment (One-Time Setup)
+
+### Step 1 — Create Railway Project
+1. Go to [railway.app](https://railway.app) → **New Project**
+2. Click **Deploy from GitHub repo**
+3. Connect to: `ship-it-north/catherine-agent-fyltrmedia`
+
+### Step 2 — Set Environment Variables
+In Railway → your service → **Variables**, add ALL variables from Section 5.
+Most important to get Catherine calling:
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
+- `OPENAI_API_KEY` — get from [platform.openai.com](https://platform.openai.com)
+- `CALENDLY_API_TOKEN`, `CALENDLY_EVENT_URL`
+- `GOOGLE_SERVICE_ACCOUNT_JSON` (see Section 6)
+- `WEBHOOK_BASE_URL` — set AFTER deploying (copy from Railway domain)
+
+### Step 3 — Get Your Railway Domain
+After first deploy:
+1. Railway → your service → **Settings** → **Domains**
+2. Copy the `*.up.railway.app` URL
+3. Set `WEBHOOK_BASE_URL=https://your-app-name.up.railway.app`
+4. Railway will auto-redeploy → Catherine auto-updates Twilio webhook on startup
+
+### Step 4 — Upgrade Twilio Account (REQUIRED)
+The current Twilio account is a **trial account** which can only call verified numbers.
+To call any number (including +15144000751):
+1. Log in at [console.twilio.com](https://console.twilio.com)
+2. Click **Upgrade Account** in the top banner
+3. Add a payment method (credit card)
+4. Minimum top-up: $20
+
+After upgrading, Catherine can call all phone numbers from your CSV.
+
+---
+
+## 10. Test Call Confirmation
+
+A test call was successfully placed on 2026-05-24:
+- **Call SID**: CA36094498fff9105e3aa956527d466f21
+- **Status**: completed
+- **Duration**: 39 seconds
+- **Voice**: Amazon Polly — Chantal (French Canadian)
+- **Script**: Catherine's opening in French + appointment offer
+- **Note**: Called +15146199473 (Philip's verified number) — trial account requires upgrade to call +15144000751
+
+---
+
 *Catherine — Fyltr Media AI Voice Agent v1.0.0*
